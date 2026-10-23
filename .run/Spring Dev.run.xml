@@ -1,12 +1,12 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Dev" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
-    <module name="VantailUpdateServer.main" />
-    <option name="SPRING_BOOT_MAIN_CLASS" value="me.aidanbennett.vantailupdateserver.VantailUpdateServerApplication" />
+  <configuration default="false" name="Spring Dev" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
     <envs>
       <env name="DB_URL" value="jdbc:postgresql://localhost:5432/vantail_update_server" />
       <env name="DB_USERNAME" value="vantail_app" />
       <env name="DB_PASSWORD" value="" />
     </envs>
+    <module name="VantailUpdateServer.main" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="me.aidanbennett.vantailupdateserver.VantailUpdateServerApplication" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>
