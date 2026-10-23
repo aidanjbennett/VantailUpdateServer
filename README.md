@@ -59,3 +59,11 @@ docker run --rm -p 8080:8080 \
   -e UPDATE_PUBLISH_SECRET=replace-with-a-long-random-secret \
   vantail-update-server
 ```
+
+After tests pass, GitHub Actions publishes the image to GitHub Container Registry on
+pushes to `main` and on version tags beginning with `v`. Pull requests run the tests
+and build the image without publishing. Use the published image with:
+
+```bash
+docker pull ghcr.io/aidanjbennett/vantailupdateserver:latest
+```
