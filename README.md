@@ -45,3 +45,17 @@ http://localhost:8080/update/latest/{{target}}/{{arch}}/{{currentVersion}}
 For example, the client resolves that to
 `/update/latest/darwin/aarch64/1.0.0`. The client remains responsible for comparing
 the returned version with its current version using semantic-version rules.
+
+## Docker
+
+Build and run the application container with:
+
+```bash
+docker build -t vantail-update-server .
+docker run --rm -p 8080:8080 \
+  -e DB_URL=jdbc:postgresql://host.docker.internal:5432/vantail_update_server \
+  -e DB_USERNAME=vantail_app \
+  -e DB_PASSWORD=choose-a-strong-password \
+  -e UPDATE_PUBLISH_SECRET=replace-with-a-long-random-secret \
+  vantail-update-server
+```
