@@ -42,7 +42,7 @@ public class UpdateEntity {
     @MapKeyColumn(name = "platform", length = 100)
     private Map<String, PlatformDownload> platforms = new LinkedHashMap<>();
 
-    protected UpdateEntity() {
+    public UpdateEntity() {
     }
 
     public Long getId() {

@@ -1,6 +1,7 @@
 package me.aidanbennett.vantailupdateserver.controllers;
 
 import me.aidanbennett.vantailupdateserver.dto.update.UpdateResponse;
+import me.aidanbennett.vantailupdateserver.dto.update.UpdateRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -9,10 +10,21 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import me.aidanbennett.vantailupdateserver.service.UpdateService;
 import me.aidanbennett.vantailupdateserver.exception.InvalidPageException;
+import me.aidanbennett.vantailupdateserver.exception.PublishUnauthorizedException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 
 import org.springframework.data.domain.Page;
 
@@ -20,9 +32,14 @@ import org.springframework.data.domain.Page;
 public class UpdateController {
 
     private final UpdateService updateService;
+    private final String publishSecret;
 
-    public UpdateController(UpdateService updateService) {
+    public UpdateController(
+            UpdateService updateService,
+            @Value("${update.publish-secret:}") String publishSecret
+    ) {
         this.updateService = updateService;
+        this.publishSecret = publishSecret;
     }
 
     @GetMapping("/update/latest")
@@ -33,6 +50,53 @@ public class UpdateController {
     })
     public UpdateResponse getLatestUpdate() {
         return updateService.getLatestUpdate();
+    }
+
+    @GetMapping("/update/latest/{target}/{arch}/{currentVersion}")
+    @Operation(summary = "Get the latest update for a platform and current version")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Latest update", content = @Content(schema = @Schema(implementation = UpdateResponse.class))),
+            @ApiResponse(responseCode = "404", description = "No updates found")
+    })
+    public UpdateResponse getLatestUpdateForClient(
+            @Parameter(description = "Operating system target", example = "darwin")
+            @PathVariable String target,
+            @Parameter(description = "CPU architecture", example = "aarch64")
+            @PathVariable String arch,
+            @Parameter(description = "Currently installed version", example = "1.0.0")
+            @PathVariable String currentVersion
+    ) {
+        return updateService.getLatestUpdateForClient(target, arch, currentVersion);
+    }
+
+    @PostMapping("/updates")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Publish an update")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Update published", content = @Content(schema = @Schema(implementation = UpdateResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid update manifest"),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid publish secret"),
+            @ApiResponse(responseCode = "409", description = "Version already exists")
+    })
+    public UpdateResponse createUpdate(
+            @RequestHeader(value = "X-Update-Publish-Secret", required = false) String providedSecret,
+            @Valid @RequestBody UpdateRequest request
+    ) {
+        if (!isValidPublishSecret(providedSecret)) {
+            throw new PublishUnauthorizedException();
+        }
+        return updateService.createUpdate(request);
+    }
+
+    private boolean isValidPublishSecret(String providedSecret) {
+        if (publishSecret == null || publishSecret.isBlank()
+                || providedSecret == null || providedSecret.isBlank()) {
+            return false;
+        }
+        return MessageDigest.isEqual(
+                publishSecret.getBytes(StandardCharsets.UTF_8),
+                providedSecret.getBytes(StandardCharsets.UTF_8)
+        );
     }
 
     @GetMapping("/update/{id}")
@@ -57,7 +121,4 @@ public class UpdateController {
         }
         return updateService.getAllUpdates(page);
     }
-
-    // In the future maybe make it so I can
-    // create updates via rest api and remove updates etc
 }

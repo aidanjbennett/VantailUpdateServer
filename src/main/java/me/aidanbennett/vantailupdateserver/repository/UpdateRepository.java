@@ -11,6 +11,8 @@ import java.util.Optional;
 public interface UpdateRepository extends JpaRepository<UpdateEntity, Long> {
     Optional<UpdateEntity> findTopByOrderByPubDateDesc();
 
+    boolean existsByVersion(String version);
+
     @Modifying
     @Query("update UpdateEntity u set u.requestCount = u.requestCount + 1 where u.id = :id")
     int incrementRequestCount(@Param("id") long id);

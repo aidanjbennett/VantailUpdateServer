@@ -20,6 +20,16 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
 
+    @ExceptionHandler(UpdateAlreadyExistsException.class)
+    public ApiErrorResponse handleUpdateAlreadyExists(UpdateAlreadyExistsException exception) {
+        return error(HttpStatus.CONFLICT, exception.getMessage());
+    }
+
+    @ExceptionHandler(PublishUnauthorizedException.class)
+    public ApiErrorResponse handlePublishUnauthorized(PublishUnauthorizedException exception) {
+        return error(HttpStatus.UNAUTHORIZED, exception.getMessage());
+    }
+
     private ApiErrorResponse error(HttpStatus status, String message) {
         return new ApiErrorResponse(
                 status.value(),
